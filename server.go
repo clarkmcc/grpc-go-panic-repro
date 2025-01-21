@@ -45,26 +45,21 @@ func (i *impl) Process(_ context.Context, req *ProcessRequest) (*ProcessResponse
 			}
 
 			// Get results and ensure they are handled correctly
-			results := objc.Call[foundation.Array](request, objc.Sel("results"))
+			results := objc.Call[[]vision.RecognizedTextObservation](request, objc.Sel("results"))
 
 			// Iterate over results safely
-			for _, result := range foundation.ArrayToSlice[objc.Object](results) {
-				if objc.Call[bool](result, objc.Sel("isKindOfClass:"), objc.GetClass("VNRecognizedTextObservation")) {
-					// Access the boundingBox as foundation.Rect
-					boundingBox := objc.Call[foundation.Rect](result, objc.Sel("boundingBox"))
+			for _, result := range results {
+				boundingBox := result.BoundingBox()
 
-					// Convert Vision's bottom-left origin to top-left origin
-					x0 := int(boundingBox.Origin.X * float64(width))
-					y0 := int((1.0 - (boundingBox.Origin.Y + boundingBox.Size.Height)) * float64(height)) // Flip Y-axis
-					x1 := int((boundingBox.Origin.X + boundingBox.Size.Width) * float64(width))
-					y1 := int((1.0 - boundingBox.Origin.Y) * float64(height)) // Flip Y-axis
+				// Convert Vision's bottom-left origin to top-left origin
+				x0 := int(boundingBox.Origin.X * float64(width))
+				y0 := int((1.0 - (boundingBox.Origin.Y + boundingBox.Size.Height)) * float64(height)) // Flip Y-axis
+				x1 := int((boundingBox.Origin.X + boundingBox.Size.Width) * float64(width))
+				y1 := int((1.0 - boundingBox.Origin.Y) * float64(height)) // Flip Y-axis
 
-					// Get the recognized text
-					recognizedText := objc.Call[foundation.Array](result, objc.Sel("topCandidates:"), 1)
-					for _, textCandidate := range foundation.ArrayToSlice[objc.Object](recognizedText) {
-						text := objc.Call[string](textCandidate, objc.Sel("string"))
-						_, _, _, _, _ = x0, y0, x1, y1, text
-					}
+				// Get the recognized text
+				for _, candidate := range result.TopCandidates(1) {
+					_, _, _, _, _ = x0, y0, x1, y1, candidate.String()
 				}
 			}
 		})
@@ -78,7 +73,6 @@ func (i *impl) Process(_ context.Context, req *ProcessRequest) (*ProcessResponse
 		var errObj foundation.Error
 		handler.PerformRequestsError([]vision.IRequest{req}, unsafe.Pointer(&errObj))
 		if !errObj.IsNil() {
-			errObj.Autorelease()
 			err = errors.New(errObj.Description())
 			return
 		}
