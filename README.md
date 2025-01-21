@@ -3,12 +3,18 @@ Reproduction for https://github.com/grpc/grpc-go/issues/8023.
 ## Steps to reproduce
 Start the server
 ```shell
-go run server.go example.pb.go example_grpc.pb.go
+go run server.go example.pb.go example_grpc.pb.go vision.go
 ```
 
 Start the client
 ```shell
-go run client.go example.pb.go example_grpc.pb.go
+go run client.go example.pb.go example_grpc.pb.go vision.go grpc
+```
+
+You can run the client without gRPC which will run the Apple Vision Framework calls locally rather than through gRPC. The crash is only reproduced over gRPC, the same Apple Vision Framework code works when executed directly from `client.go` rather than through the gRPC service.
+
+```shell
+go run client.go example.pb.go example_grpc.pb.go vision.go local
 ```
 
 ## Environments
