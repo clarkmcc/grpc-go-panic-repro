@@ -16,9 +16,7 @@ func main() {
 		panic(err)
 	}
 	for i := 0; i < 1000; i++ {
-		if i%100 == 0 {
-			print(".")
-		}
+		print(".")
 		_, err = NewExampleClient(conn).Process(context.Background(), &ProcessRequest{
 			Image: image,
 		})
