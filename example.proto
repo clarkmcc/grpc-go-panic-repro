@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option go_package = "github.com/clarkmcc/grpc-go-panic-repro;main";
+
+service Example {
+  rpc Process(ProcessRequest) returns (ProcessResponse) {}
+}
+
+message ProcessRequest{
+  bytes image = 1;
+}
+message ProcessResponse{}
